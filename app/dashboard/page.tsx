@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 
 type CalEvent = {
   id: string; user_id: string; title: string; date: string; time: string;
-  end_date: string; description: string; visibility: string; color: string;
+  end_time: string; end_date: string; description: string; visibility: string; color: string;
 }
 type CreativeDeadline = { id: string; title: string; due_date: string; brand: string; stage: string }
 
@@ -16,7 +16,7 @@ const COLOR_VAR: Record<string, string> = {
   red: 'var(--red)', purple: 'var(--c-resources)', teal: 'var(--c-clients)',
 }
 
-const blank = { title: '', date: '', time: '', end_date: '', description: '', visibility: 'all', color: 'gold' }
+const blank = { title: '', date: '', time: '', end_time: '', end_date: '', description: '', visibility: 'all', color: 'gold' }
 
 export default function CalendarPage() {
   const [events, setEvents] = useState<CalEvent[]>([])
@@ -72,7 +72,7 @@ export default function CalendarPage() {
   function openEdit(e: CalEvent) {
     if (e.user_id !== userId) return
     setSelected(e)
-    setForm({ title: e.title, date: e.date, time: e.time, end_date: e.end_date, description: e.description, visibility: e.visibility, color: e.color })
+    setForm({ title: e.title, date: e.date, time: e.time, end_time: e.end_time, end_date: e.end_date, description: e.description, visibility: e.visibility, color: e.color })
     setModal(true)
   }
 
@@ -102,7 +102,10 @@ export default function CalendarPage() {
     const endStr = end.toISOString().slice(0, 10)
     const items: { date: string; title: string; type: 'event' | 'creative'; color: string; sub: string; eventObj?: CalEvent }[] = []
     events.filter(e => e.date >= today && e.date <= endStr)
-      .forEach(e => items.push({ date: e.date, title: e.title, type: 'event', color: COLOR_VAR[e.color] || 'var(--gold)', sub: e.time || '', eventObj: e }))
+      .forEach(e => {
+        const timeStr = e.time ? (e.end_time ? `${e.time} – ${e.end_time}` : e.time) : ''
+        items.push({ date: e.date, title: e.title, type: 'event', color: COLOR_VAR[e.color] || 'var(--gold)', sub: timeStr, eventObj: e })
+      })
     deadlines.filter(d => d.due_date >= today && d.due_date <= endStr)
       .forEach(d => items.push({ date: d.due_date, title: d.title, type: 'creative', color: 'var(--c-creative)', sub: `${d.brand} · ${d.stage}` }))
     items.sort((a, b) => a.date.localeCompare(b.date))
@@ -184,7 +187,7 @@ export default function CalendarPage() {
                       {ev.slice(0, Math.max(0, 2 - dl.length)).map(e => (
                         <div key={e.id} onClick={evt => { evt.stopPropagation(); openEdit(e) }}
                           style={{ fontSize: '9px', color: COLOR_VAR[e.color] || 'var(--gold)', background: `${COLOR_VAR[e.color] || 'var(--gold)'}20`, padding: '2px 5px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', borderLeft: `2px solid ${COLOR_VAR[e.color] || 'var(--gold)'}`, cursor: e.user_id === userId ? 'pointer' : 'default' }}>
-                          {e.visibility === 'private' ? '· ' : ''}{e.title}
+                          {e.visibility === 'private' ? '· ' : ''}{e.time ? `${e.time}${e.end_time ? `–${e.end_time}` : ''} ` : ''}{e.title}
                         </div>
                       ))}
                       {total > 2 && <div style={{ fontSize: '8px', color: 'var(--text-muted)', padding: '1px 5px' }}>+{total - 2} more</div>}
@@ -253,11 +256,15 @@ export default function CalendarPage() {
                 <input className="form-input" type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
               </div>
               <div className="form-row">
-                <label className="form-label">Time (optional)</label>
+                <label className="form-label">Start Time (optional)</label>
                 <input className="form-input" type="time" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} />
               </div>
               <div className="form-row">
-                <label className="form-label">End Date (optional)</label>
+                <label className="form-label">End Time (optional)</label>
+                <input className="form-input" type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} />
+              </div>
+              <div className="form-row">
+                <label className="form-label">End Date (multi-day)</label>
                 <input className="form-input" type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
               </div>
               <div className="form-row">
