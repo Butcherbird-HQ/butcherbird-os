@@ -40,6 +40,14 @@ const nav: NavSection[] = [
   },
 ]
 
+function getPageColor(pathname: string): string {
+  if (pathname.startsWith('/dashboard/clients')) return 'var(--c-clients)'
+  if (pathname.startsWith('/dashboard/creative')) return 'var(--c-creative)'
+  if (pathname.startsWith('/dashboard/ai-config')) return 'var(--c-resources)'
+  if (pathname.startsWith('/dashboard/admin')) return 'var(--gold)'
+  return 'var(--gold)'
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -53,6 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setDate(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))
     const saved = localStorage.getItem('bbg-theme') || 'dark'
     setTheme(saved)
+    document.documentElement.setAttribute('data-theme', saved)
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
@@ -77,15 +86,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const initials = userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  const pageColor = getPageColor(pathname)
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-gold-bar" />
-          <div>
-            <div className="sidebar-wordmark">Butcherbird</div>
-            <div className="sidebar-sub">Operating System</div>
+          <div className="sidebar-brand-line">
+            <div className="sidebar-gold-bar" />
+            <div>
+              <div className="sidebar-wordmark">Butcherbird</div>
+              <div className="sidebar-sub">Operating System</div>
+            </div>
           </div>
         </div>
 
@@ -132,7 +144,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <main className="main-content">{children}</main>
+      <main
+        className="main-content"
+        style={{ '--page-color': pageColor } as React.CSSProperties}
+      >
+        {children}
+      </main>
     </div>
   )
 }
