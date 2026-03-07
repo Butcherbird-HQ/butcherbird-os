@@ -4,16 +4,20 @@ import { supabase } from '@/lib/supabase'
 
 type CreativeTask = {
   id: string; channel: 'static' | 'video' | 'email'; stage: string;
-  title: string; brand: string; due_date: string; notes: string; links: string;
+  title: string; brand: string; due_date: string; notes: string; links: string; assigned_to: string;
 }
 
 const CHANNELS = ['static', 'video', 'email'] as const
 const CHANNEL_LABELS = { static: 'Static Ads', video: 'Video Ads', email: 'Email Marketing' }
 const STAGES = ['Brief', 'In Progress', 'Review', 'Approved', 'Live']
-
 const BRANDS = ['BBG', 'BUUB', 'Schnozz', 'Superior', 'Gobblers', 'Hiba', 'Helpdesk', 'Other']
+const TEAM = [
+  { email: '', name: 'Unassigned' },
+  { email: 'g@butcherbird.global', name: 'Gascoyne' },
+  { email: 'tian@butcherbird.global', name: 'Tian' },
+]
 
-const blank: Omit<CreativeTask, 'id'> = { channel: 'static', stage: 'Brief', title: '', brand: 'BBG', due_date: '', notes: '', links: '' }
+const blank: Omit<CreativeTask, 'id'> = { channel: 'static', stage: 'Brief', title: '', brand: 'BBG', due_date: '', notes: '', links: '', assigned_to: '' }
 
 const stageColor: Record<string, string> = {
   Brief: 'var(--text-muted)', 'In Progress': 'var(--blue)', Review: 'var(--amber)',
@@ -43,7 +47,7 @@ export default function CreativePage() {
 
   function openEdit(t: CreativeTask) {
     setSelected(t)
-    setForm({ channel: t.channel, stage: t.stage, title: t.title, brand: t.brand, due_date: t.due_date, notes: t.notes, links: t.links })
+    setForm({ channel: t.channel, stage: t.stage, title: t.title, brand: t.brand, due_date: t.due_date, notes: t.notes, links: t.links, assigned_to: t.assigned_to || '' })
     setModal(true)
   }
 
@@ -75,6 +79,8 @@ export default function CreativePage() {
   const channelTasks = tasks.filter(t => t.channel === channel)
   const total = channelTasks.length
   const live = channelTasks.filter(t => t.stage === 'Live').length
+
+  const assigneeName = (email: string) => TEAM.find(t => t.email === email)?.name || ''
 
   if (loading) return <div style={{ padding: '48px', color: 'var(--text-muted)', fontSize: '11px', letterSpacing: '.1em' }}>Loading...</div>
 
@@ -115,6 +121,11 @@ export default function CreativePage() {
                     <div key={t.id} className="pipeline-card" onClick={() => openEdit(t)}>
                       <div className="pipeline-card-name">{t.title}</div>
                       <div className="pipeline-card-detail">{t.brand}{t.due_date ? ` · Due ${new Date(t.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}</div>
+                      {t.assigned_to && (
+                        <div style={{ fontSize: '9px', color: 'var(--c-creative)', marginTop: '5px', letterSpacing: '.05em' }}>
+                          → {assigneeName(t.assigned_to)}
+                        </div>
+                      )}
                       {t.notes && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px', lineHeight: 1.5 }}>{t.notes}</div>}
                       <div style={{ display: 'flex', gap: '4px', marginTop: '10px', flexWrap: 'wrap' }}>
                         {STAGES.filter(s => s !== stage).map(s => (
@@ -163,6 +174,12 @@ export default function CreativePage() {
                 <label className="form-label">Brand</label>
                 <select className="form-select" value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })}>
                   {BRANDS.map(b => <option key={b}>{b}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <label className="form-label">Assign To</label>
+                <select className="form-select" value={form.assigned_to} onChange={e => setForm({ ...form, assigned_to: e.target.value })}>
+                  {TEAM.map(m => <option key={m.email} value={m.email}>{m.name}</option>)}
                 </select>
               </div>
               <div className="form-row">
