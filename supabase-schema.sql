@@ -46,7 +46,11 @@ create table if not exists crm_clients (
   "category" text not null default 'external',
   "baseFee" numeric not null default 0,
   "revSharePct" numeric not null default 0,
-  "status" text not null default 'Active'
+  "status" text not null default 'Active',
+  "drive_link" text not null default '',
+  "instagram" text not null default '',
+  "website" text not null default '',
+  "notes" text not null default ''
 );
 alter table crm_clients disable row level security;
 
@@ -59,6 +63,43 @@ create table if not exists crm_monthly (
   primary key ("clientId", "month")
 );
 alter table crm_monthly disable row level security;
+
+-- ── TASKS (Personal executive tasks, per user) ────────────────────────────
+create table if not exists tasks (
+  "id" text primary key,
+  "user_id" uuid not null references auth.users(id) on delete cascade,
+  "type" text not null default 'daily',
+  "text" text not null default '',
+  "done" boolean not null default false,
+  "created_at" timestamptz not null default now()
+);
+alter table tasks enable row level security;
+create policy "Users see own tasks" on tasks for all using (auth.uid() = user_id);
+
+-- ── CREATIVE TASKS (Creative pipeline kanban) ─────────────────────────────
+create table if not exists creative_tasks (
+  "id" text primary key,
+  "channel" text not null default 'static',
+  "stage" text not null default 'Brief',
+  "title" text not null default '',
+  "brand" text not null default '',
+  "due_date" text not null default '',
+  "notes" text not null default '',
+  "links" text not null default ''
+);
+alter table creative_tasks disable row level security;
+
+-- ── RESOURCES (Knowledge base) ────────────────────────────────────────────
+create table if not exists resources (
+  "id" text primary key,
+  "title" text not null default '',
+  "category" text not null default 'SOP',
+  "description" text not null default '',
+  "url" text not null default '',
+  "content" text not null default '',
+  "tags" text not null default ''
+);
+alter table resources disable row level security;
 
 -- ── STAFF ─────────────────────────────────────────────────────────────────
 create table if not exists staff (
@@ -85,3 +126,10 @@ create table if not exists candidates (
   "dateAdded" text not null default ''
 );
 alter table candidates disable row level security;
+
+-- ── MIGRATIONS (run if tables already exist) ──────────────────────────────
+-- Add new columns to crm_clients if upgrading from old schema:
+-- alter table crm_clients add column if not exists "drive_link" text not null default '';
+-- alter table crm_clients add column if not exists "instagram" text not null default '';
+-- alter table crm_clients add column if not exists "website" text not null default '';
+-- alter table crm_clients add column if not exists "notes" text not null default '';

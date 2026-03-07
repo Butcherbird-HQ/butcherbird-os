@@ -1,17 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
-export function proxy(req: NextRequest) {
-  const auth = req.cookies.get('bbg-auth')?.value
+export async function proxy(req: NextRequest) {
+  let res = NextResponse.next({ request: req })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return req.cookies.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
+          res = NextResponse.next({ request: req })
+          cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options))
+        },
+      },
+    }
+  )
+
+  const { data: { session } } = await supabase.auth.getSession()
+
   const isLoginPage = req.nextUrl.pathname === '/login'
-  const isApiAuth = req.nextUrl.pathname === '/api/auth'
+  const isRoot = req.nextUrl.pathname === '/'
 
-  if (isLoginPage || isApiAuth) return NextResponse.next()
-
-  if (auth !== 'authenticated') {
+  if (!session && !isLoginPage && !isRoot) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  return NextResponse.next()
+  if (session && isLoginPage) {
+    return NextResponse.redirect(new URL('/dashboard', req.url))
+  }
+
+  return res
 }
 
 export const config = {
