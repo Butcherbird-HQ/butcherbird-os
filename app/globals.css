@@ -99,23 +99,6 @@ a { text-decoration: none; color: inherit; }
   position: relative;
 }
 
-/* Horizontal rule texture */
-.sidebar::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 47px,
-    rgba(255,255,255,0.013) 47px,
-    rgba(255,255,255,0.013) 48px
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-
-.sidebar > * { position: relative; z-index: 1; }
 
 .sidebar-header {
   padding: 26px 22px 22px;
