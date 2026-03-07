@@ -7,13 +7,16 @@ type Client = {
   id: string; name: string; type: string; category: string;
   status: string; drive_link: string; instagram: string;
   website: string; notes: string; ad_account_id: string;
+  client_context: string;
 }
 
 const blank: Omit<Client, 'id'> = {
   name: '', type: 'performance', category: 'external',
   status: 'Active', drive_link: '', instagram: '',
-  website: '', notes: '', ad_account_id: '',
+  website: '', notes: '', ad_account_id: '', client_context: '',
 }
+
+const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length
 
 export default function ClientsPage() {
   const router = useRouter()
@@ -27,7 +30,7 @@ export default function ClientsPage() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('crm_clients').select('id,name,type,category,status,drive_link,instagram,website,notes,ad_account_id').order('name'),
+      supabase.from('crm_clients').select('id,name,type,category,status,drive_link,instagram,website,notes,ad_account_id,client_context').order('name'),
       supabase.from('analyses').select('client_id,created_at').order('created_at', { ascending: false }),
     ]).then(([{ data: c }, { data: a }]) => {
       if (c) setClients(c)
@@ -46,7 +49,7 @@ export default function ClientsPage() {
   function openEdit(e: React.MouseEvent, c: Client) {
     e.stopPropagation()
     setSelected(c)
-    setForm({ name: c.name, type: c.type, category: c.category, status: c.status, drive_link: c.drive_link || '', instagram: c.instagram || '', website: c.website || '', notes: c.notes || '', ad_account_id: c.ad_account_id || '' })
+    setForm({ name: c.name, type: c.type, category: c.category, status: c.status, drive_link: c.drive_link || '', instagram: c.instagram || '', website: c.website || '', notes: c.notes || '', ad_account_id: c.ad_account_id || '', client_context: c.client_context || '' })
     setModal(true)
   }
 
@@ -224,6 +227,32 @@ export default function ClientsPage() {
             <div className="form-row">
               <label className="form-label">Notes</label>
               <textarea className="form-textarea" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+            </div>
+            <div className="form-row">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>
+                  Client Context
+                  {form.client_context
+                    ? <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}>— {wordCount(form.client_context).toLocaleString()} words</span>
+                    : <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}>— injected into AI analysis as Layer 4</span>
+                  }
+                </span>
+                <label style={{ fontSize: '8px', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-resources)', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 400 }}>
+                  Upload File
+                  <input type="file" accept=".txt,.md" style={{ display: 'none' }} onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = ev => setForm(f => ({ ...f, client_context: ev.target?.result as string || '' }))
+                    reader.readAsText(file)
+                    e.target.value = ''
+                  }} />
+                </label>
+              </label>
+              <textarea className="form-textarea" style={{ minHeight: '180px', fontFamily: 'monospace', fontSize: '11px', lineHeight: 1.7 }}
+                placeholder="Paste client context here, or upload a .txt / .md file above. This document is injected into every AI analysis run for this client."
+                value={form.client_context}
+                onChange={e => setForm({ ...form, client_context: e.target.value })} />
             </div>
 
             <div style={{ display: 'flex', gap: '8px' }}>
