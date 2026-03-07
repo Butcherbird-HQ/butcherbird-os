@@ -52,7 +52,7 @@ export default function ClientDetailPage() {
 
       const [{ data: c }, { data: a }, { data: r }] = await Promise.all([
         supabase.from('crm_clients').select('*').eq('id', id).single(),
-        supabase.from('analyses').select('*').eq('client_id', id).order('created_at', { ascending: false }),
+        supabase.from('analyses').select('id,client_id,created_by,status,action_summary,created_at').eq('client_id', id).order('created_at', { ascending: false }),
         supabase.from('creative_tasks').select('*').eq('client_id', id).eq('stage', 'Queued'),
       ])
       if (c) setClient(c)

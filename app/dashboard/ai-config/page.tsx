@@ -96,9 +96,8 @@ export default function AIConfigPage() {
       setModules(prev => prev.map(m => m.id === selected.id ? updated : m))
       await supabase.from('ai_config').update(form).eq('id', selected.id)
     } else {
-      const m: ConfigModule = { id: Date.now().toString(), created_at: new Date().toISOString(), ...form }
-      setModules(prev => [...prev, m])
-      await supabase.from('ai_config').insert(m)
+      const { data } = await supabase.from('ai_config').insert(form).select().single()
+      if (data) setModules(prev => [...prev, data])
     }
     setModal(false)
   }
