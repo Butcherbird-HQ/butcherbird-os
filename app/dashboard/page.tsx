@@ -49,21 +49,6 @@ export default function CommandCentre() {
 
       <div className="page-body" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
-        {/* Stat row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px' }}>
-          {[
-            { val: activeClients.length, label: 'Active Clients', color: 'var(--c-clients)' },
-            { val: tasks.length, label: 'Pipeline Cards', color: 'var(--c-creative)' },
-            { val: tasks.filter(t => t.stage === 'In Progress').length, label: 'In Progress', color: 'var(--blue)' },
-            { val: tasks.filter(t => t.stage === 'Live').length, label: 'Live', color: 'var(--green)' },
-          ].map(s => (
-            <div key={s.label} className="stat-card" style={{ '--stat-color': s.color } as React.CSSProperties}>
-              <div className="stat-card-val">{s.val}</div>
-              <div className="stat-card-label">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
         {/* Pipeline breakdown */}
         <div>
           <div style={{ fontSize: '9px', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '10px' }}>Creative Pipeline</div>

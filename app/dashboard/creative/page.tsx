@@ -28,7 +28,7 @@ const blank: Omit<CreativeTask, 'id'> = {
 }
 
 const stageColor: Record<string, string> = {
-  Brief: 'var(--text-muted)', 'In Progress': 'var(--blue)', Review: 'var(--amber)',
+  Brief: 'var(--c-resources)', 'In Progress': 'var(--blue)', Review: 'var(--amber)',
   Approved: 'var(--c-clients)', Live: 'var(--green)',
 }
 const funnelColor: Record<string, string> = {
@@ -126,13 +126,29 @@ export default function CreativePage() {
             const cards = channelTasks.filter(t => t.stage === stage)
             return (
               <div key={stage} className="pipeline-col">
-                <div className="pipeline-col-header">
-                  <span className="pipeline-col-title" style={{ color: stageColor[stage] }}>{stage}</span>
+                <div className="pipeline-col-header" style={stage === 'Brief' ? { borderBottom: '1px solid rgba(139,92,246,0.2)', paddingBottom: '10px', marginBottom: '2px' } : {}}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="pipeline-col-title" style={{ color: stageColor[stage] }}>{stage}</span>
+                      {stage === 'Brief' && (
+                        <span style={{ fontSize: '7px', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--c-resources)', background: 'rgba(139,92,246,0.12)', padding: '2px 7px' }}>AI Input</span>
+                      )}
+                    </div>
+                    {stage === 'Brief' && (
+                      <div style={{ fontSize: '8px', color: 'var(--c-resources)', letterSpacing: '.04em', opacity: 0.75 }}>Analysis output enters here</div>
+                    )}
+                  </div>
                   <span className="pipeline-col-count">{cards.length}</span>
                 </div>
                 <div className="pipeline-cards">
                   {cards.map(t => (
-                    <div key={t.id} className="pipeline-card" onClick={() => openEdit(t)}>
+                    <div key={t.id} className="pipeline-card" onClick={() => openEdit(t)}
+                      style={stage === 'Brief' ? { borderLeft: '3px solid var(--c-resources)', background: 'rgba(139,92,246,0.04)' } : {}}>
+                      {t.from_analysis_id && stage === 'Brief' && (
+                        <div style={{ fontSize: '7px', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--c-resources)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '9px' }}>✦</span> From Analysis
+                        </div>
+                      )}
                       <div className="pipeline-card-name">{t.title}</div>
                       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '5px 0' }}>
                         {t.funnel_stage && (
