@@ -23,7 +23,7 @@ const stageColors: Record<string, string> = {
   'Proposal Sent': 'var(--gold)', 'Closed': 'var(--green)', 'Onboarding': 'var(--gold)', 'Live': 'var(--green)',
 }
 
-const blankMover = { text: '', detail: '', entity: 'BBG', priority: 'high' as const, due_date: '' }
+const blankMover: { text: string; detail: string; entity: string; priority: 'critical' | 'high' | 'normal'; due_date: string } = { text: '', detail: '', entity: 'BBG', priority: 'high', due_date: '' }
 
 export default function ExecutivePage() {
   const [movers, setMovers] = useState<Mover[]>([])
