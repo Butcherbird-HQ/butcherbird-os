@@ -12,12 +12,8 @@ const nav: NavSection[] = [
     section: 'Workspace',
     links: [
       {
-        href: '/dashboard', exact: true, label: 'Calendar', color: 'var(--gold)',
-        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-      },
-      {
-        href: '/dashboard/executive', exact: false, label: 'Executive', color: 'var(--c-executive)',
-        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+        href: '/dashboard', exact: true, label: 'Command Centre', color: 'var(--gold)',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
       },
       {
         href: '/dashboard/clients', exact: false, label: 'Clients', color: 'var(--c-clients)',
@@ -27,11 +23,6 @@ const nav: NavSection[] = [
         href: '/dashboard/creative', exact: false, label: 'Creative Pipeline', color: 'var(--c-creative)',
         icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
       },
-    ],
-  },
-  {
-    section: 'Knowledge',
-    links: [
       {
         href: '/dashboard/ai-config', exact: false, label: 'AI Config', color: 'var(--c-resources)',
         icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>,
@@ -41,14 +32,6 @@ const nav: NavSection[] = [
   {
     section: 'Admin',
     links: [
-      {
-        href: '/dashboard/crm', exact: false, label: 'CRM', color: 'var(--c-crm)',
-        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
-      },
-      {
-        href: '/dashboard/staff', exact: false, label: 'Staff', color: 'var(--c-staff)',
-        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-      },
       {
         href: '/dashboard/admin', exact: false, label: 'Users', color: 'var(--gold)', superOnly: true,
         icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M16 11l1.5 1.5L21 9"/></svg>,

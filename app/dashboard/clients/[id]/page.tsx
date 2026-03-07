@@ -5,9 +5,8 @@ import { supabase } from '@/lib/supabase'
 
 type Client = {
   id: string; name: string; type: string; category: string;
-  baseFee: number; revSharePct: number; status: string;
-  drive_link: string; instagram: string; website: string;
-  notes: string; ad_account_id: string;
+  status: string; drive_link: string; instagram: string;
+  website: string; notes: string; ad_account_id: string;
 }
 type Analysis = {
   id: string; client_id: string; created_by: string; status: string;
@@ -68,7 +67,7 @@ export default function ClientDetailPage() {
           <div className="page-title">{client.name}</div>
           <div className="page-subtitle">
             <span className={`pill pill-${client.status === 'Active' ? 'teal' : 'red'}`} style={{ marginRight: '8px' }}>{client.status}</span>
-            {client.category} · ${client.baseFee.toLocaleString()}/mo
+            {client.category}
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -102,8 +101,6 @@ export default function ClientDetailPage() {
               {[
                 { label: 'Category', val: client.category },
                 { label: 'Type', val: client.type },
-                { label: 'Base Fee', val: `$${client.baseFee.toLocaleString()}/mo` },
-                { label: 'Rev Share', val: `${client.revSharePct}%` },
                 { label: 'Meta Ad Account', val: client.ad_account_id || '—' },
                 { label: 'Instagram', val: client.instagram || '—' },
                 { label: 'Website', val: client.website || '—' },

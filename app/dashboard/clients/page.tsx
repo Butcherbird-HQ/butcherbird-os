@@ -5,28 +5,39 @@ import { supabase } from '@/lib/supabase'
 
 type Client = {
   id: string; name: string; type: string; category: string;
-  baseFee: number; revSharePct: number; status: string;
-  drive_link: string; instagram: string; website: string;
-  notes: string; ad_account_id: string;
+  status: string; drive_link: string; instagram: string;
+  website: string; notes: string; ad_account_id: string;
 }
 
 const blank: Omit<Client, 'id'> = {
-  name: '', type: 'performance', category: 'external', baseFee: 0,
-  revSharePct: 10, status: 'Active', drive_link: '', instagram: '',
+  name: '', type: 'performance', category: 'external',
+  status: 'Active', drive_link: '', instagram: '',
   website: '', notes: '', ad_account_id: '',
 }
 
 export default function ClientsPage() {
   const router = useRouter()
   const [clients, setClients] = useState<Client[]>([])
+  const [latestAnalyses, setLatestAnalyses] = useState<Record<string, string>>({})
   const [modal, setModal] = useState(false)
   const [selected, setSelected] = useState<Client | null>(null)
   const [form, setForm] = useState<Omit<Client, 'id'>>(blank)
+  const [sort, setSort] = useState<'az' | 'analysis'>('az')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('crm_clients').select('*').order('name').then(({ data }) => {
-      if (data) setClients(data)
+    Promise.all([
+      supabase.from('crm_clients').select('id,name,type,category,status,drive_link,instagram,website,notes,ad_account_id').order('name'),
+      supabase.from('analyses').select('client_id,created_at').order('created_at', { ascending: false }),
+    ]).then(([{ data: c }, { data: a }]) => {
+      if (c) setClients(c)
+      if (a) {
+        const latest: Record<string, string> = {}
+        a.forEach((analysis: { client_id: string; created_at: string }) => {
+          if (!latest[analysis.client_id]) latest[analysis.client_id] = analysis.created_at
+        })
+        setLatestAnalyses(latest)
+      }
       setLoading(false)
     })
   }, [])
@@ -35,7 +46,7 @@ export default function ClientsPage() {
   function openEdit(e: React.MouseEvent, c: Client) {
     e.stopPropagation()
     setSelected(c)
-    setForm({ name: c.name, type: c.type, category: c.category, baseFee: c.baseFee, revSharePct: c.revSharePct, status: c.status, drive_link: c.drive_link || '', instagram: c.instagram || '', website: c.website || '', notes: c.notes || '', ad_account_id: c.ad_account_id || '' })
+    setForm({ name: c.name, type: c.type, category: c.category, status: c.status, drive_link: c.drive_link || '', instagram: c.instagram || '', website: c.website || '', notes: c.notes || '', ad_account_id: c.ad_account_id || '' })
     setModal(true)
   }
 
@@ -59,8 +70,17 @@ export default function ClientsPage() {
     setModal(false)
   }
 
+  const sorted = [...clients].sort((a, b) => {
+    if (sort === 'az') return a.name.localeCompare(b.name)
+    const aDate = latestAnalyses[a.id] || ''
+    const bDate = latestAnalyses[b.id] || ''
+    if (!aDate && !bDate) return a.name.localeCompare(b.name)
+    if (!aDate) return 1
+    if (!bDate) return -1
+    return bDate.localeCompare(aDate)
+  })
+
   const active = clients.filter(c => c.status === 'Active')
-  const totalMRR = active.reduce((s, c) => s + c.baseFee, 0)
 
   if (loading) return <div style={{ padding: '48px', color: 'var(--text-muted)', fontSize: '11px', letterSpacing: '.1em' }}>Loading...</div>
 
@@ -69,70 +89,93 @@ export default function ClientsPage() {
       <div className="page-header">
         <div>
           <div className="page-dept-tag" style={{ background: 'rgba(45,155,111,0.12)', color: 'var(--c-clients)' }}>Clients</div>
-          <div className="page-title">Live Clients</div>
-          <div className="page-subtitle">{active.length} active · ${totalMRR.toLocaleString()}/mo base</div>
+          <div className="page-title">Clients</div>
+          <div className="page-subtitle">{active.length} active · {clients.length} total</div>
         </div>
         <button className="btn btn-primary" onClick={openNew}>+ Add Client</button>
       </div>
 
       <div className="page-body">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px', marginBottom: '24px' }}>
-          {[
-            { val: active.length, label: 'Active Clients', color: 'var(--c-clients)' },
-            { val: `$${totalMRR.toLocaleString()}`, label: 'Base MRR', color: 'var(--gold)' },
-            { val: clients.filter(c => c.category === 'external').length, label: 'External', color: 'var(--c-outreach)' },
-          ].map(s => (
-            <div key={s.label} className="stat-card" style={{ '--stat-color': s.color } as React.CSSProperties}>
-              <div className="stat-card-val">{s.val}</div>
-              <div className="stat-card-label">{s.label}</div>
-            </div>
-          ))}
+        <div className="tabs" style={{ '--tab-color': 'var(--c-clients)', marginBottom: '20px' } as React.CSSProperties}>
+          <button className={`tab${sort === 'az' ? ' active' : ''}`} onClick={() => setSort('az')}>A–Z</button>
+          <button className={`tab${sort === 'analysis' ? ' active' : ''}`} onClick={() => setSort('analysis')}>Latest Analysis</button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {clients.length === 0 && (
-            <div className="empty-state">
-              <div className="empty-icon">◇</div>
-              <div className="empty-text">No clients yet. Add one above.</div>
-            </div>
-          )}
-          {clients.map(c => (
-            <div key={c.id} onClick={() => router.push(`/dashboard/clients/${c.id}`)}
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${c.status === 'Active' ? 'var(--c-clients)' : 'var(--text-muted)'}`, padding: '18px 24px', display: 'flex', alignItems: 'center', gap: '24px', cursor: 'pointer', flexWrap: 'wrap' }}>
-              <div style={{ flex: '0 0 220px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', letterSpacing: '.04em', marginBottom: '5px' }}>{c.name}</div>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  <span className={`pill pill-${c.status === 'Active' ? 'teal' : 'red'}`}>{c.status}</span>
-                  <span className="pill" style={{ background: 'var(--surface3)', color: 'var(--text-muted)' }}>{c.category}</span>
+        {sorted.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">◇</div>
+            <div className="empty-text">No clients yet. Add one above.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
+            {sorted.map(c => (
+              <div key={c.id} onClick={() => router.push(`/dashboard/clients/${c.id}`)}
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderTop: `3px solid ${c.status === 'Active' ? 'var(--c-clients)' : 'var(--text-muted)'}`, padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '14px', opacity: c.status === 'Active' ? 1 : 0.65 }}>
+
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', marginBottom: '8px', letterSpacing: '.02em' }}>{c.name}</div>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <span className={`pill pill-${c.status === 'Active' ? 'teal' : 'red'}`}>{c.status}</span>
+                      <span className="pill" style={{ background: 'var(--surface3)', color: 'var(--text-muted)' }}>{c.category}</span>
+                    </div>
+                  </div>
+                  <button onClick={e => openEdit(e, c)}
+                    style={{ fontSize: '8px', letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--text-muted)', background: 'none', border: '1px solid var(--border)', padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                    Edit
+                  </button>
+                </div>
+
+                {/* Details */}
+                {(c.ad_account_id || c.instagram || c.website) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    {c.ad_account_id && (
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
+                        <span style={{ fontSize: '8px', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-muted)', minWidth: '84px' }}>Meta Account</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text)', fontFamily: 'monospace' }}>{c.ad_account_id}</span>
+                      </div>
+                    )}
+                    {c.instagram && (
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
+                        <span style={{ fontSize: '8px', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-muted)', minWidth: '84px' }}>Instagram</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text)' }}>{c.instagram}</span>
+                      </div>
+                    )}
+                    {c.website && (
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
+                        <span style={{ fontSize: '8px', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-muted)', minWidth: '84px' }}>Website</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text)' }}>{c.website}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Notes preview */}
+                {c.notes && (
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+                    {c.notes}
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '.06em' }}>
+                    {latestAnalyses[c.id]
+                      ? `Last analysis: ${new Date(latestAnalyses[c.id]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                      : 'No analyses run'}
+                  </div>
+                  {c.drive_link && (
+                    <a href={c.drive_link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                      style={{ fontSize: '8px', letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--text-muted)', border: '1px solid var(--border)', padding: '5px 10px', textDecoration: 'none' }}>
+                      Drive ↗
+                    </a>
+                  )}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '32px', flex: 1 }}>
-                {[
-                  { label: 'Base Fee', val: `$${c.baseFee.toLocaleString()}/mo` },
-                  { label: 'Rev Share', val: `${c.revSharePct}%` },
-                  { label: 'Meta Account', val: c.ad_account_id || '—' },
-                ].map(m => (
-                  <div key={m.label}>
-                    <div style={{ fontSize: '8px', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '3px' }}>{m.label}</div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>{m.val}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                {c.drive_link && (
-                  <a href={c.drive_link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                    style={{ fontSize: '8px', letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--text-muted)', border: '1px solid var(--border)', padding: '7px 12px', textDecoration: 'none' }}>
-                    Drive ↗
-                  </a>
-                )}
-                <button onClick={e => openEdit(e, c)}
-                  style={{ fontSize: '8px', letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--text-muted)', background: 'none', border: '1px solid var(--border)', padding: '7px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Edit
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {modal && (
@@ -158,14 +201,6 @@ export default function ClientsPage() {
                 <select className="form-select" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
                   <option>Active</option><option>Paused</option><option>Churned</option>
                 </select>
-              </div>
-              <div className="form-row">
-                <label className="form-label">Base Fee ($/mo)</label>
-                <input className="form-input" type="number" value={form.baseFee} onChange={e => setForm({ ...form, baseFee: +e.target.value })} />
-              </div>
-              <div className="form-row">
-                <label className="form-label">Rev Share %</label>
-                <input className="form-input" type="number" value={form.revSharePct} onChange={e => setForm({ ...form, revSharePct: +e.target.value })} />
               </div>
             </div>
             <div className="form-row">
