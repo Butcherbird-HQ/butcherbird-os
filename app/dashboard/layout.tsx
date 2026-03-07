@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-type NavLink = { href: string; exact: boolean; label: string; color: string; icon: React.ReactNode }
+type NavLink = { href: string; exact: boolean; label: string; color: string; icon: React.ReactNode; superOnly?: boolean }
 type NavSection = { section: string; links: NavLink[] }
 
 const nav: NavSection[] = [
@@ -41,6 +41,10 @@ const nav: NavSection[] = [
         href: '/dashboard/staff', exact: false, label: 'Staff', color: 'var(--c-staff)',
         icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
       },
+      {
+        href: '/dashboard/admin', exact: false, label: 'Users', color: 'var(--gold)', superOnly: true,
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M16 11l1.5 1.5L21 9"/></svg>,
+      },
     ],
   },
 ]
@@ -52,6 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userName, setUserName] = useState('Loading...')
   const [userRole, setUserRole] = useState('')
   const [theme, setTheme] = useState('dark')
+  const [userEmail, setUserEmail] = useState('')
 
   useEffect(() => {
     setDate(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))
@@ -64,6 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const role = user.user_metadata?.role || 'team'
       setUserName(name)
       setUserRole(role)
+      setUserEmail(user.email || '')
     })
   }, [router])
 
@@ -104,7 +110,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {nav.map(section => (
             <div key={section.section}>
               <div className="sidebar-section-label">{section.section}</div>
-              {section.links.map(link => {
+              {section.links.filter(link => !link.superOnly || userEmail === 'g@butcherbird.global').map(link => {
                 const active = link.exact ? pathname === link.href : pathname.startsWith(link.href)
                 return (
                   <Link
