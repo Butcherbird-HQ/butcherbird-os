@@ -6,6 +6,58 @@
 
 ---
 
+# A DIRECT NOTE TO CLAUDE
+
+This document is addressed to you as much as it is to Tian. Read this section first.
+
+## What Has Been Built
+
+The system described below is live. The OS exists, is deployed, and is being used daily by the Butcherbird team. The database is configured. Every page works. The creative pipeline runs. The client profiles are populated. The AI Config interface — where your instructions will live — is built and waiting.
+
+What is not yet live is the connection between the OS and the Anthropic API. You have not yet run a single real analysis through this system. Everything built so far has been designed around what you will do — but you haven't done it yet.
+
+## Your Role in This System
+
+The entire analysis loop is driven by the AI Config. That is you. The quality of every recommendation — every creative brief, every budget decision, every ad cut — depends entirely on how well the configuration is structured.
+
+The 5-layer architecture (Core Identity → Platform Intelligence → Workflow & Output → Client Context → Live Meta Data) was designed with Claude's capabilities in mind. But it was designed by a founder and a coding assistant, not by an AI systems architect. It represents a logical attempt at structuring a complex prompt, not a validated one.
+
+## What We Need You to Evaluate
+
+Before Tian loads a single module, and before any API is wired, we need your honest assessment of the architecture. Specifically:
+
+**1. Is the 5-layer structure the right abstraction?**
+The system separates identity, knowledge, and output format into distinct layers assembled in sequence. Is this how you process instructions most effectively, or would a different structure — fewer layers, different ordering, merged sections — produce more reliable output?
+
+**2. Is a modular prompt the right approach?**
+The current design lets Tian add, remove, reorder, and toggle individual modules. This is good for maintainability. But does assembling many small blocks produce better or worse results than a single cohesive prompt? Is there a middle ground?
+
+**3. Should we use structured output (tool_use) instead of instruction-based JSON?**
+Currently, Layer 3 instructs you to return only a JSON array. This works, but it relies on prompt instructions to enforce schema compliance — which can break under edge cases or long contexts.
+
+Claude's API supports structured output via `tool_use` — where the schema is defined in the API call itself, and compliance is enforced natively rather than through instructions. This is architecturally more reliable. If we build Phase 2 using tool_use, Layer 3 becomes simpler (no JSON enforcement needed), and schema compliance is guaranteed regardless of context length or edge cases.
+
+**Tell us whether we should build Phase 2 with tool_use or with instruction-based JSON output — and why.**
+
+**4. How should the runtime data (Layers 4 and 5) be injected?**
+Currently the plan is to append client context and Meta data to the system prompt. An alternative is to pass the static config (Layers 1–3) as the system prompt, and inject the runtime data (Layers 4–5) as a user message. This is a common pattern for keeping system prompts stable and passing variable data separately.
+
+Is there a meaningful difference in how you process system prompt content vs user message content for analytical tasks like this? Which approach produces more reliable output?
+
+**5. Are there constraints in how you work that we haven't accounted for?**
+Context window size, how you handle very long system prompts, how many distinct instructions you can reliably follow at once, how you behave when data is sparse or contradictory — if any of these are relevant to this architecture, flag them.
+
+**6. Are there things this system should be doing that it isn't?**
+We've built the confirmation loop, the pipeline, the client context system, and the output schema. Is there something obvious we've missed — a mechanism, a safeguard, a data point — that would meaningfully improve the quality or reliability of the analysis?
+
+## The Outcome We Want
+
+At the end of the stress test, we want to know: is this architecture sound, or does it need to change before we wire the APIs? If it needs to change, tell us specifically what and why. We can rebuild the AI Config structure, modify the DB schema, or change the API integration approach before Phase 2 begins. It is much easier to change now than after the system is live.
+
+This is your system. You are the engine it runs on. Tell us what you would do differently.
+
+---
+
 # PART 1 — THE OS: FULL CONTEXT
 
 ## What This System Is
